@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#121929">
+<meta name="color-scheme" content="dark">
 <meta name="description" content="Somnus: cierra el día, nosotros cuidamos la noche. Guía del antifaz, registro diario del sueño y resumen semanal.">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
@@ -22,14 +24,7 @@
   --r:14px;
   color-scheme:dark;
 }
-@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
-  --noche:#F4EFEA; --surface:#FBF8F4; --surface2:#EDE7DF; --fg:#121929; --muted:#5D6272;
-  --line:rgba(18,25,41,.13); --accent:#B06F3E; --accent-ink:#FBF8F4; --accent-soft:rgba(176,111,62,.12);
-  --ok:#3F7A51; --warn:#9A6A12; --alert:#A9493A; color-scheme:light } }
-:root[data-theme="light"]{
-  --noche:#F4EFEA; --surface:#FBF8F4; --surface2:#EDE7DF; --fg:#121929; --muted:#5D6272;
-  --line:rgba(18,25,41,.13); --accent:#B06F3E; --accent-ink:#FBF8F4; --accent-soft:rgba(176,111,62,.12);
-  --ok:#3F7A51; --warn:#9A6A12; --alert:#A9493A; color-scheme:light }
+/* Somnus usa siempre Azul Noche como base, sin importar el modo del dispositivo. */
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
