@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Somnus: cierra el día, nosotros cuidamos la noche. Guía del antifaz, registro diario del sueño y resumen semanal.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Somnus</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: una sola columna serena, navegación fija arriba; cada sección es una "vista" del menú. Dark-first (Azul Noche), claro en Crema Lino. */
+:root{
+  --noche:#121929; --surface:#1A2337; --surface2:#222C44; --fg:#F4EFEA; --muted:#B4AEA6;
+  --line:rgba(244,239,234,.13); --accent:#D99B6A; --accent-ink:#121929; --accent-soft:rgba(217,155,106,.14);
+  --ok:#8FBF9A; --warn:#E3B868; --alert:#E08A7A;
+  --display:"DM Serif Display", Georgia, "Times New Roman", serif;
+  --body:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:14px;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --noche:#F4EFEA; --surface:#FBF8F4; --surface2:#EDE7DF; --fg:#121929; --muted:#5D6272;
+  --line:rgba(18,25,41,.13); --accent:#B06F3E; --accent-ink:#FBF8F4; --accent-soft:rgba(176,111,62,.12);
+  --ok:#3F7A51; --warn:#9A6A12; --alert:#A9493A; color-scheme:light } }
+:root[data-theme="light"]{
+  --noche:#F4EFEA; --surface:#FBF8F4; --surface2:#EDE7DF; --fg:#121929; --muted:#5D6272;
+  --line:rgba(18,25,41,.13); --accent:#B06F3E; --accent-ink:#FBF8F4; --accent-soft:rgba(176,111,62,.12);
+  --ok:#3F7A51; --warn:#9A6A12; --alert:#A9493A; color-scheme:light }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--noche);color:var(--fg)}
+body{font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--noche)}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.2rem,6vw,3.6rem)}
+h2{font-size:clamp(1.7rem,4vw,2.3rem)}
+h3{font-size:1.3rem}
+p{margin:0}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.eyebrow{font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.muted{color:var(--muted)}
+.lead{font-size:1.12rem;max-width:60ch;color:var(--muted)}
+
+/* Header + menú */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--noche) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:20px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);flex:none}
+.brand svg{width:40px;height:23px}
+.brand span{font-size:.82rem;letter-spacing:.38em;font-weight:500}
+nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1}
+nav::-webkit-scrollbar{display:none}
+nav a{flex:none;text-decoration:none;color:var(--muted);font-size:.9rem;padding:7px 12px;border-radius:999px;white-space:nowrap}
+nav a:hover{color:var(--fg)}
+nav a[aria-current="page"]{color:var(--accent-ink);background:var(--accent)}
+@media (max-width:760px){.bar{flex-wrap:wrap;gap:8px}.brand{width:100%}nav{flex-basis:100%}}
+
+main{padding-block:40px 80px}
+section.view{display:grid;gap:36px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:transparent;padding:10px 18px;border-radius:999px;cursor:pointer;text-decoration:none;color:var(--fg);font-weight:500;font-size:.95rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:6px 12px;font-size:.85rem}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+
+/* Inicio */
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center;padding-block:24px 8px}
+.hero .mark{color:var(--fg);width:100%;max-width:340px;justify-self:center}
+.hero p.slogan{font-family:var(--display);font-style:italic;font-size:1.35rem;color:var(--accent)}
+@media (max-width:760px){.hero{grid-template-columns:1fr}.hero .mark{max-width:220px;order:-1}}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media (max-width:760px){.three{grid-template-columns:1fr}}
+.three .card h3{margin-bottom:8px}
+.problem{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+@media (max-width:760px){.problem{grid-template-columns:1fr}}
+.problem ul{margin:0;padding:0;list-style:none;display:grid;gap:12px}
+.problem li{padding-left:22px;position:relative}
+.problem li::before{content:"";position:absolute;left:0;top:.7em;width:10px;height:1.5px;background:var(--accent)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.facts div{background:var(--surface);padding:18px 20px;display:grid;gap:4px}
+.facts strong{font-family:var(--display);font-weight:400;font-size:1.5rem}
+.menu-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.tile{display:grid;gap:6px;text-decoration:none;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;transition:border-color .2s}
+.tile:hover{border-color:var(--accent)}
+.tile b{font-weight:600}
+.tile span{color:var(--muted);font-size:.92rem}
+
+/* Guías (pasos) */
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:s}
+.steps li{display:grid;grid-template-columns:56px 1fr;gap:16px;padding-block:20px;border-top:1px solid var(--line);counter-increment:s}
+.steps li:last-child{border-bottom:1px solid var(--line)}
+.steps li::before{content:counter(s);font-family:var(--display);font-size:2rem;color:var(--accent);line-height:1}
+.steps h3{margin-bottom:6px}
+.steps p{color:var(--muted);max-width:62ch}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+.care{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px;counter-reset:c}
+.care li{counter-increment:c;display:grid;gap:6px;align-content:start}
+.care li::before{content:counter(c);font-family:var(--display);color:var(--accent);font-size:1.6rem;line-height:1}
+.care b{font-weight:600}
+.care p{color:var(--muted);font-size:.94rem}
+.habits{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.habits li{padding-left:22px;position:relative;color:var(--muted);font-size:.95rem}
+.habits li::before{content:"";position:absolute;left:0;top:.75em;width:10px;height:1.5px;background:var(--accent)}
+.quote{border-left:2px solid var(--accent);padding:4px 0 4px 18px;font-family:var(--display);font-size:1.2rem;font-style:italic}
+
+/* Diario */
+.diary{display:grid;grid-template-columns:330px 1fr;gap:24px;align-items:start}
+@media (max-width:860px){.diary{grid-template-columns:1fr}}
+.cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cal-head h3{text-transform:capitalize}
+.icon-btn{border:1px solid var(--line);background:transparent;width:34px;height:34px;border-radius:50%;cursor:pointer;display:grid;place-items:center}
+.icon-btn:hover{border-color:var(--accent)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal .dow{font-size:.72rem;color:var(--muted);letter-spacing:.08em;padding-bottom:4px}
+.cal button{aspect-ratio:1;border:1px solid transparent;background:transparent;border-radius:10px;cursor:pointer;position:relative;font-variant-numeric:tabular-nums;font-size:.92rem;max-width:100%}
+.cal button:hover:not(:disabled){background:var(--surface2)}
+.cal button:disabled{opacity:.3;cursor:default}
+.cal button.today{border-color:var(--line)}
+.cal button.sel{background:var(--accent);color:var(--accent-ink)}
+.cal button i{position:absolute;left:50%;bottom:5px;transform:translateX(-50%);width:5px;height:5px;border-radius:50%}
+.cal button i.full{background:var(--accent)}
+.cal button i.half{border:1.5px solid var(--accent)}
+.cal button.sel i.full{background:var(--accent-ink)}
+.cal button.sel i.half{border-color:var(--accent-ink)}
+.legend{display:flex;gap:16px;font-size:.8rem;color:var(--muted);margin-top:14px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.form{display:grid;gap:22px}
+fieldset{border:0;margin:0;padding:0;display:grid;gap:16px;min-width:0}
+legend.h{font-family:var(--display);font-size:1.4rem;padding:0;margin-bottom:4px}
+label.f{display:grid;gap:6px;font-size:.88rem;color:var(--muted)}
+textarea,input[type=number],input[type=time],select{width:100%;background:var(--noche);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--fg);font-size:.98rem}
+textarea{min-height:84px;resize:vertical;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.grid2{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:.9rem}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--fg)}
+.stepper{display:flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:max-content;background:var(--noche)}
+.stepper button{width:42px;height:42px;border:0;background:transparent;cursor:pointer;font-size:1.2rem}
+.stepper button:hover{background:var(--surface2)}
+.stepper output{min-width:44px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;cursor:pointer;color:var(--fg);font-size:.95rem}
+.toggle input{appearance:none;width:42px;height:24px;border-radius:999px;background:var(--surface2);position:relative;cursor:pointer;flex:none;border:1px solid var(--line);transition:background .2s}
+.toggle input::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
+.toggle input:checked{background:var(--accent)}
+.toggle input:checked::after{transform:translateX(18px);background:var(--accent-ink)}
+.sep{height:1px;background:var(--line)}
+.save-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.status{font-size:.82rem;color:var(--muted)}
+.confirm{display:flex;gap:8px;align-items:center;font-size:.88rem}
+
+/* Frase */
+.phrase-stage{position:relative;min-height:440px;border-radius:20px;overflow:hidden;background:radial-gradient(120% 90% at 50% 110%,var(--accent-soft),transparent 60%),var(--surface);border:1px solid var(--line);display:grid;place-items:center;text-align:center;padding:48px 24px}
+.breath{position:absolute;left:50%;bottom:-160px;width:420px;height:420px;max-width:none;transform:translateX(-50%);border-radius:50%;border:1.5px solid var(--accent);opacity:.35;animation:breath 10s ease-in-out infinite}
+.breath.b2{width:300px;height:300px;bottom:-100px;animation-delay:-1s;opacity:.25}
+@keyframes breath{0%,100%{transform:translateX(-50%) scale(.9)}50%{transform:translateX(-50%) scale(1.06)}}
+.phrase{position:relative;font-family:var(--display);font-size:clamp(1.7rem,4.6vw,2.8rem);max-width:22ch;line-height:1.2;transition:opacity .6s}
+.phrase.fade{opacity:0}
+.breath-cue{position:relative;margin-top:18px;letter-spacing:.2em;text-transform:uppercase;font-size:.75rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.breath{animation:none}.phrase{transition:none}}
+
+/* Semana */
+.week-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+@media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpis div{background:var(--surface);padding:16px 18px;display:grid;gap:2px}
+.kpis strong{font-family:var(--display);font-weight:400;font-size:1.9rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpis small{color:var(--muted);font-size:.8rem}
+.chart-wrap{overflow-x:auto}
+.chart-wrap svg{display:block;width:100%;min-width:320px;height:auto}
+.signals{display:grid;gap:12px}
+.signal{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.pill{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;height:max-content;white-space:nowrap}
+.pill.warn{color:var(--warn);border:1px solid var(--warn)}
+.pill.alert{color:var(--alert);border:1px solid var(--alert)}
+.pill.ok{color:var(--ok);border:1px solid var(--ok)}
+.signal b{display:block;margin-bottom:2px}
+.signal p{color:var(--muted);font-size:.94rem}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.92rem}
+th,td{padding:10px 12px;text-align:center;border-bottom:1px solid var(--line)}
+th{font-weight:500;color:var(--muted);font-size:.8rem;letter-spacing:.04em}
+td:first-child,th:first-child{text-align:left}
+tr:last-child td{border-bottom:0}
+td.y{color:var(--ok);font-weight:600}
+td.n{color:var(--muted)}
+.verdict{display:grid;gap:8px;padding:22px;border-radius:var(--r);background:var(--accent-soft);border:1px solid var(--accent)}
+.verdict h3{font-size:1.5rem}
+.banner{padding:12px 16px;border:1px dashed var(--accent);border-radius:12px;font-size:.92rem;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.note{font-size:.84rem;color:var(--muted);max-width:75ch}
+.plan-set{display:flex;flex-wrap:wrap;gap:14px;align-items:end}
+.plan-set label.f{width:170px}
+.empty{text-align:center;padding:40px 20px;display:grid;gap:12px;justify-items:center}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--fg);color:var(--noche);padding:10px 18px;border-radius:999px;font-size:.92rem;opacity:0;transition:.3s;pointer-events:none;z-index:30}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+footer{border-top:1px solid var(--line);padding-block:28px;color:var(--muted);font-size:.85rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="iso" viewBox="0 0 200 110">
+    <g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">
+      <path d="M12 104 A88 88 0 0 1 188 104"/>
+      <path d="M40 60 C62 76 94 76 114 60 C134 44 146 30 168 40"/>
+      <path d="M146 48 A70 70 0 0 1 170 104"/>
+      <path d="M131 62 A52 52 0 0 1 152 104"/>
+      <path d="M36 80 A70 70 0 0 0 30 104"/>
+      <path d="M56 82 A50 50 0 0 0 50 104"/>
+      <path d="M78 104 A22 22 0 0 1 122 104"/>
+    </g>
+  </symbol>
+</svg>
+
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="#inicio" aria-label="Somnus, inicio"><svg aria-hidden="true"><use href="#iso"/></svg><span>SOMNUS</span></a>
+    <nav aria-label="Menú principal">
+      <a href="#inicio" data-v="inicio">Inicio</a>
+      <a href="#antifaz" data-v="antifaz">Uso del antifaz</a>
+      <a href="#guia" data-v="guia">Cómo usar el registro</a>
+      <a href="#diario" data-v="diario">Registro diario</a>
+      <a href="#frase" data-v="frase">Frase del día</a>
+      <a href="#semana" data-v="semana">Mi semana</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- INICIO -->
+<section class="view" id="v-inicio">
+  <div class="hero">
+    <div style="display:grid;gap:18px">
+      <p class="eyebrow">Sleep tech · Hecho en Valencia, Venezuela</p>
+      <h1>Somos una empresa de sueño.</h1>
+      <p class="lead">Somnus diseña un antifaz musical ergonómico, una biblioteca sonora propia y este registro diario para que hagas la transición del día a la noche sin depender del teléfono.</p>
+      <p class="slogan">Cierra el día. Nosotros cuidamos la noche.</p>
+      <div class="row"><a class="btn primary" href="#diario">Empezar mi registro de hoy</a><a class="btn" href="#antifaz">Cómo usar el antifaz</a></div>
+    </div>
+    <svg class="mark" viewBox="0 0 200 110" role="img" aria-label="Isotipo de Somnus"><use href="#iso"/></svg>
+  </div>
+
+  <div class="problem">
+    <div style="display:grid;gap:12px">
+      <p class="eyebrow">Lo que resolvemos</p>
+      <h2>Llegas a la cama con el día sin cerrar.</h2>
+      <p class="muted">Pendientes dando vueltas, horarios irregulares, una habitación compartida y el teléfono como último recurso para dormirte. Somnus te acompaña en ese momento con un ritual sencillo, sonido que se apaga contigo y cero pantallas en la cama.</p>
+    </div>
+    <ul>
+      <li><b>Sin pantallas en la cama.</b> <span class="muted">El sonido vive en el antifaz, no en tu teléfono.</span></li>
+      <li><b>Bloqueo total de luz.</b> <span class="muted">Penumbra completa aunque la habitación no lo esté.</span></li>
+      <li><b>El sonido se queda contigo.</b> <span class="muted">Altavoces planos internos, pensados para quien comparte habitación.</span></li>
+      <li><b>Se apaga solo.</b> <span class="muted">Temporizador con apagado automático: no tienes que despertarte a detenerlo.</span></li>
+      <li><b>Un cierre del día por escrito.</b> <span class="muted">Anotas lo que pensaste y lo pendiente, y lo dejas en la página.</span></li>
+    </ul>
+  </div>
+
+  <div class="three">
+    <div class="card"><p class="eyebrow">Objeto</p><h3>Antifaz musical ergonómico</h3><p class="muted">Confeccionado en talleres textiles de Valencia. Electrónica modular desmontable para lavar y reparar.</p></div>
+    <div class="card"><p class="eyebrow">Contenido</p><h3>Biblioteca sonora propia</h3><p class="muted">Programas progresivos de 7 noches, paisajes sonoros naturales venezolanos y ruido rosa y marrón.</p></div>
+    <div class="card"><p class="eyebrow">Hábito</p><h3>Registro de cierre del día</h3><p class="muted">Calendario, registro de tu noche, una frase diaria y un resumen al final de cada semana.</p></div>
+  </div>
+
+  <div style="display:grid;gap:14px">
+    <p class="eyebrow">Qué puedes hacer aquí</p>
+    <div class="menu-tiles">
+      <a class="tile" href="#antifaz"><b>Uso del antifaz</b><span>Ajuste, sonido, temporizador y lavado.</span></a>
+      <a class="tile" href="#guia"><b>Cómo usar el registro</b><span>Cinco minutos de noche y dos por la mañana.</span></a>
+      <a class="tile" href="#diario"><b>Registro diario</b><span>Calendario con tus pensamientos y tus noches.</span></a>
+      <a class="tile" href="#frase"><b>Frase del día</b><span>Una idea breve para soltar el día.</span></a>
+      <a class="tile" href="#semana"><b>Mi semana</b><span>Cómo te fue, señales a observar y tu plan.</span></a>
+    </div>
+  </div>
+
+  <div class="facts">
+    <div><span class="eyebrow">Precio</span><strong>US$ 115</strong><span class="muted">Antifaz + biblioteca sonora</span></div>
+    <div><span class="eyebrow">Encuéntranos</span><strong>Valencia</strong><span class="muted">Andrómeda (Sambil), Sauna El Viñedo, Spamanos Concepto La Viña, Marea Spa Prebo</span></div>
+    <div><span class="eyebrow">Atención</span><strong>WhatsApp Business</strong><span class="muted">Catálogo, asesoría y entregas con cita previa</span></div>
+  </div>
+</section>
+
+<!-- ANTIFAZ -->
+<section class="view" id="v-antifaz" hidden>
+  <div style="display:grid;gap:12px">
+    <p class="eyebrow">Indicaciones de uso</p>
+    <h2>Tu antifaz, de la mesa de noche a la mañana</h2>
+    <p class="lead">Siete pasos. Hazlos con calma la primera noche; a partir de la tercera salen solos.</p>
+  </div>
+  <ol class="steps">
+    <li><div><h3>Verifica la carga</h3><p>Antes de usarlo, revisa que el antifaz esté cargado. Si hace falta, cárgalo con un cable USB tipo C durante el día, no en la cama, para que la noche empiece sin cables cerca de tu cara.</p></div></li>
+    <li><div><h3>Cierra el día antes de ponértelo</h3><p>Abre el Registro diario y escribe lo que pensaste, lo que viviste y lo pendiente. Unos cinco minutos. Después, deja el teléfono fuera de tu alcance.</p></div></li>
+    <li><div><h3>Ajusta la banda sin presión</h3><p>El antifaz debe bloquear la luz sin apretar los ojos. Desliza los altavoces planos hasta que queden sobre tus orejas. Si duermes de lado, colócalos un poco más arriba para que no presionen contra la almohada.</p></div></li>
+    <li><div><h3>Elige qué escuchar</h3><p>Si es tu primera semana, empieza por la noche 1 del programa progresivo de 7 noches. También puedes elegir un paisaje sonoro venezolano o ruido rosa o marrón si prefieres un fondo constante.</p></div></li>
+    <li><div><h3>Volumen bajo, temporizador puesto</h3><p>Usa el volumen justo para escucharlo, no para tapar todo. Activa el apagado automático: el sonido se apaga contigo y no tienes que despertarte para detenerlo.</p></div></li>
+    <li><div><h3>Si no llega el sueño, no busques la pantalla</h3><p>Quédate quieto, respira lento y deja correr la pista. Si te despiertas, repite la misma pista en lugar de cambiar de contenido.</p></div></li>
+    <li><div><h3>Por la mañana: registra tu noche</h3><p>Anota cómo dormiste en el Registro diario y guarda el antifaz en su caja. Si toca lavarlo, sigue los Cuidados del antifaz que verás a continuación.</p></div></li>
+  </ol>
+  <div class="card" style="display:grid;gap:20px">
+    <div style="display:grid;gap:6px"><p class="eyebrow">Para que dure</p><h3>Cuidados del antifaz</h3></div>
+    <ol class="care">
+      <li><b>Saca el sistema antes de lavar</b><p>Retira el sistema electrónico (altavoces y reproductor) antes de lavar el antifaz. Es desmontable justamente para eso: la electrónica nunca debe mojarse.</p></li>
+      <li><b>Cambia la funda a tu gusto</b><p>La funda es intercambiable según tu preferencia. Su etiqueta bordada está hecha para resistir el lavado.</p></li>
+      <li><b>Revisa la carga antes de usarlo</b><p>Verifica que esté cargado antes de acostarte. Se carga con un cable USB tipo C.</p></li>
+      <li><b>Repara antes de reemplazar</b><p>Si alguna pieza falla, no deseches el antifaz. Su diseño modular permite repararlo o cambiar solo la pieza. Escríbenos por WhatsApp Business.</p></li>
+      <li><b>Guárdalo en su caja</b><p>Cuando no lo uses, guárdalo en su caja junto a la guía impresa, que trae las indicaciones de tu modelo.</p></li>
+    </ol>
+  </div>
+  <div class="split">
+    <div class="card" style="display:grid;gap:10px">
+      <h3>Si se desajusta a mitad de la noche</h3>
+      <p class="quote">Eso no debería pasar y lo lamentamos.</p>
+      <p class="muted">Escríbenos por WhatsApp Business con el lado del que te acuestas y cuánto mide tu cabeza. Te indicamos cómo reposicionar los altavoces o gestionamos un cambio.</p>
+    </div>
+    <div class="card" style="display:grid;gap:10px">
+      <h3>Buenas costumbres cada noche</h3>
+      <ul class="habits">
+        <li>Haz tu cierre del día antes de ponerte el antifaz.</li>
+        <li>Deja el teléfono fuera de tu alcance.</li>
+        <li>Volumen bajo y apagado automático siempre activado.</li>
+        <li>Sigue el programa de 7 noches en orden, una noche a la vez.</li>
+        <li>Altavoces sobre las orejas, sin presión, según el lado en que duermes.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- GUIA REGISTRO -->
+<section class="view" id="v-guia" hidden>
+  <div style="display:grid;gap:12px">
+    <p class="eyebrow">Cómo usar el registro diario</p>
+    <h2>Cinco minutos de noche, dos por la mañana</h2>
+    <p class="lead">El registro tiene dos momentos. De noche cierras el día; por la mañana cuentas cómo fue la noche. Con eso, el domingo tienes un resumen de tu semana.</p>
+  </div>
+  <ol class="steps">
+    <li><div><h3>Elige el día en el calendario</h3><p>Entra en Registro diario y toca la fecha. Hoy aparece marcado. Un punto lleno indica un día completo; un círculo, un día a medias.</p></div></li>
+    <li><div><h3>De noche: cierra el día</h3><p>Escribe qué pensamientos tuviste, qué viviste y qué queda pendiente para mañana. Marca cómo te sientes. No hace falta escribir bonito: la idea es sacarlo de la cabeza y dejarlo en la página.</p></div></li>
+    <li><div><h3>Por la mañana: registra tu noche</h3><p>Indica si lograste dormir, a qué hora te acostaste, cuántas horas dormiste, cuántas canciones o pistas usaste, cuánto tardaste en dormirte, cuántas veces te despertaste y si usaste el teléfono en la cama.</p></div></li>
+    <li><div><h3>Lee tu frase del día</h3><p>Al guardar, pasa a Frase del día. Es una idea breve con una respiración guiada para empezar o terminar con calma.</p></div></li>
+    <li><div><h3>El domingo, revisa Mi semana</h3><p>Verás cómo te fue, posibles señales a observar en tu sueño y si cumpliste tu plan: cierre del día hecho, sin teléfono en la cama, tu meta de horas y tu hora de acostarte.</p></div></li>
+  </ol>
+  <div class="split">
+    <div class="card" style="display:grid;gap:8px"><h3>Tu plan</h3><p class="muted">En Mi semana defines tu meta de horas y tu hora de acostarte. El plan se mide con cuatro hábitos por noche: cierre del día, teléfono fuera de la cama, horas cumplidas y hora de acostarte (con 30 minutos de margen).</p></div>
+    <div class="card" style="display:grid;gap:8px"><h3>Tu privacidad</h3><p class="muted">Lo que escribes se guarda solo para ti, en tu cuenta. Nadie más lo ve, ni siquiera quien comparte esta página contigo. El resumen semanal orienta; no es un diagnóstico médico.</p></div>
+  </div>
+  <div class="row"><a class="btn primary" href="#diario">Ir al registro diario</a></div>
+</section>
+
+<!-- DIARIO -->
+<section class="view" id="v-diario" hidden>
+  <div style="display:grid;gap:8px">
+    <p class="eyebrow">Registro diario</p>
+    <h2 id="d-title">Hoy</h2>
+  </div>
+  <div class="diary">
+    <div class="card">
+      <div class="cal-head">
+        <button class="icon-btn" id="cal-prev" aria-label="Mes anterior">‹</button>
+        <h3 id="cal-month">Mes</h3>
+        <button class="icon-btn" id="cal-next" aria-label="Mes siguiente">›</button>
+      </div>
+      <div class="cal" id="cal"></div>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Día completo</span><span><i style="border:1.5px solid var(--accent)"></i>A medias</span></div>
+      <div class="sep" style="margin:18px 0"></div>
+      <p class="status" id="store-status">Preparando tu registro…</p>
+    </div>
+
+    <form class="card form" id="entry" novalidate>
+      <fieldset>
+        <legend class="h">Cierre del día</legend>
+        <label class="f">¿Qué pensamientos tuviste hoy?<textarea id="f-thoughts" placeholder="Lo que te dio vueltas en la cabeza…"></textarea></label>
+        <label class="f">¿Qué viviste hoy?<textarea id="f-lived" placeholder="Momentos, conversaciones, lo que pasó…"></textarea></label>
+        <label class="f">Pendientes para mañana<textarea id="f-pending" placeholder="Escríbelos aquí y déjalos en la página."></textarea></label>
+        <div style="display:grid;gap:8px"><span class="muted" style="font-size:.88rem">¿Cómo te sientes al cerrar el día?</span><div class="chips" id="f-mood"></div></div>
+        <label class="toggle"><span>Hice mi cierre del día antes de acostarme</span><input type="checkbox" id="f-ritual"></label>
+      </fieldset>
+      <div class="sep"></div>
+      <fieldset>
+        <legend class="h" id="night-legend">Tu noche</legend>
+        <div style="display:grid;gap:8px"><span class="muted" style="font-size:.88rem">¿Lograste dormir?</span><div class="chips" id="f-slept"></div></div>
+        <div class="grid2">
+          <label class="f">Hora en que te acostaste<input type="time" id="f-bed"></label>
+          <label class="f">Horas que dormiste<input type="number" id="f-hours" min="0" max="16" step="0.5" inputmode="decimal" placeholder="Ej. 7.5"></label>
+        </div>
+        <div class="grid2">
+          <div style="display:grid;gap:6px"><span class="muted" style="font-size:.88rem">Canciones o pistas usadas</span><div class="stepper" data-for="songs"><button type="button" aria-label="Menos">−</button><output id="f-songs">0</output><button type="button" aria-label="Más">+</button></div></div>
+          <div style="display:grid;gap:6px"><span class="muted" style="font-size:.88rem">Veces que te despertaste</span><div class="stepper" data-for="wakes"><button type="button" aria-label="Menos">−</button><output id="f-wakes">0</output><button type="button" aria-label="Más">+</button></div></div>
+        </div>
+        <div class="grid2">
+          <label class="f">¿Cuánto tardaste en dormirte?<select id="f-latency"><option value="">Sin indicar</option><option value="10">Menos de 15 min</option><option value="22">15 a 30 min</option><option value="45">30 a 60 min</option><option value="75">Más de 1 hora</option></select></label>
+          <label class="f">¿Qué escuchaste?<select id="f-program"></select></label>
+        </div>
+        <label class="toggle"><span>Usé el teléfono ya acostado</span><input type="checkbox" id="f-phone"></label>
+      </fieldset>
+      <div class="save-row">
+        <div class="row"><button class="btn primary" type="submit">Guardar día</button><span id="del-zone"></span></div>
+        <span class="status" id="save-status"></span>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- FRASE -->
+<section class="view" id="v-frase" hidden>
+  <div style="display:grid;gap:8px">
+    <p class="eyebrow">Frase del día</p>
+    <h2 id="f-date-title">Para hoy</h2>
+  </div>
+  <div class="phrase-stage" id="stage">
+    <div class="breath"></div><div class="breath b2"></div>
+    <div>
+      <p class="phrase" id="phrase">…</p>
+      <p class="breath-cue" id="cue">Inhala</p>
+    </div>
+  </div>
+  <div class="row" style="justify-content:center">
+    <button class="btn" id="ph-prev">Frase anterior</button>
+    <button class="btn primary" id="ph-today">Volver a la de hoy</button>
+    <button class="btn" id="ph-next">Otra frase</button>
+  </div>
+  <p class="note" style="text-align:center;margin-inline:auto">Sigue el círculo: inhala mientras crece, exhala mientras baja. Unas seis respiraciones bastan.</p>
+</section>
+
+<!-- SEMANA -->
+<section class="view" id="v-semana" hidden>
+  <div class="week-head">
+    <div style="display:grid;gap:8px"><p class="eyebrow">Mi semana</p><h2 id="w-title">Semana</h2></div>
+    <div class="row"><button class="icon-btn" id="w-prev" aria-label="Semana anterior">‹</button><span id="w-range" class="muted" style="font-variant-numeric:tabular-nums"></span><button class="icon-btn" id="w-next" aria-label="Semana siguiente">›</button></div>
+  </div>
+  <div id="w-body"></div>
+  <details class="card">
+    <summary style="cursor:pointer;font-weight:500">Ajustar mi plan</summary>
+    <div class="plan-set" style="margin-top:16px">
+      <label class="f">Meta de horas por noche<input type="number" id="p-meta" min="4" max="12" step="0.5"></label>
+      <label class="f">Hora de acostarme<input type="time" id="p-bed"></label>
+      <button class="btn small" id="p-save" type="button">Guardar plan</button>
+    </div>
+  </details>
+  <p class="note">Este resumen se basa solo en lo que registras y sirve para observar tus hábitos. No es un diagnóstico. Si las dificultades para dormir se mantienen por más de tres semanas o afectan tu día, consulta a un médico o especialista del sueño.</p>
+</section>
+
+</main>
+
+<footer><div class="wrap"><span>Somnus · Cierra el día. Nosotros cuidamos la noche.</span><span>Valencia, Carabobo · Venezuela</span></div></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const MONTHS = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const DOWS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const DOW_SHORT = ["L","M","M","J","V","S","D"];
+const MOODS = ["Tranquilo","Contento","Cansado","Ansioso","Saturado","Triste"];
+const SLEPT = [["si","Sí"],["costo","Me costó"],["no","No"]];
+const PROGRAMS = ["","Programa 7 noches · noche 1","Programa 7 noches · noche 2","Programa 7 noches · noche 3","Programa 7 noches · noche 4","Programa 7 noches · noche 5","Programa 7 noches · noche 6","Programa 7 noches · noche 7","Paisaje sonoro venezolano","Ruido rosa","Ruido marrón","No usé el antifaz"];
+const PHRASES = [
+ "Cierra el día. Nosotros cuidamos la noche.",
+ "Lo que no terminaste hoy también puede esperar a mañana.",
+ "Escribe lo pendiente. La página lo sostiene por ti esta noche.",
+ "No tienes que dormirte. Solo tienes que descansar.",
+ "Hoy hiciste suficiente.",
+ "Respira más lento de lo que piensas.",
+ "El teléfono también puede dormir, en otra mesa.",
+ "La noche no te pide nada.",
+ "Deja que el sonido se apague contigo.",
+ "Si un pensamiento vuelve, anótalo y déjalo ahí.",
+ "Afloja la mandíbula. Baja los hombros.",
+ "Mañana empieza mejor cuando hoy termina con calma.",
+ "Tu cama es para descansar, no para resolver.",
+ "El silencio también es compañía.",
+ "Dormir no es una tarea que se aprueba.",
+ "Elige un sonido y quédate con él.",
+ "Lo que sentiste hoy fue real. Ya puedes soltarlo.",
+ "Piensa en una cosa pequeña que salió bien hoy.",
+ "La penumbra es el primer paso.",
+ "Si el sueño no llega, quédate quieto y escucha.",
+ "Una noche difícil no define tu semana.",
+ "Duerme sin depender de nada.",
+ "Hoy ya no hay nada más que contestar.",
+ "Escucha la lluvia, aunque no esté lloviendo.",
+ "El cuerpo sabe dormir. Dale espacio.",
+ "Un día a la vez. Una noche a la vez.",
+ "Bajar el ritmo también es avanzar.",
+ "Lo importante de mañana seguirá ahí mañana."
+];
+
+// ---------- fechas ----------
+const pad = n => String(n).padStart(2,"0");
+const key = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = k => { const [y,m,d] = k.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const monday = d => { const x = new Date(d.getFullYear(),d.getMonth(),d.getDate()); const w = (x.getDay()+6)%7; return addDays(x,-w); };
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const fmtLong = d => `${DOWS[d.getDay()]} ${d.getDate()} de ${MONTHS[d.getMonth()]}`;
+const fmtShort = d => `${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`;
+const nf = n => n.toLocaleString("es-VE",{maximumFractionDigits:1});
+const toMin = t => { if(!t) return null; const [h,m] = t.split(":").map(Number); let v = h*60+m; if (v < 12*60) v += 1440; return v; };
+const phraseIdx = d => { const start = new Date(2026,0,1); return ((Math.round((d - start)/864e5) % PHRASES.length) + PHRASES.length) % PHRASES.length; };
+
+// ---------- almacenamiento ----------
+const S = { entries:{}, plan:{meta:7.5, bed:"23:00"}, mode:"local", col:null, demo:false };
+const LS = "somnus.registro.v1";
+function loadLocal(){ try { const j = JSON.parse(localStorage.getItem(LS)||"{}"); if (j.entries) S.entries = j.entries; if (j.plan) S.plan = j.plan; } catch(e){} }
+function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify({entries:S.entries, plan:S.plan})); } catch(e){} }
+function setStoreStatus(){
+  $("#store-status").textContent = S.mode === "cloud"
+    ? "Tus registros se guardan en tu cuenta y solo tú puedes verlos."
+    : "Tus registros se guardan en este navegador y solo tú puedes verlos.";
+}
+async function persist(k, obj){
+  if (obj) S.entries[k] = obj; else delete S.entries[k];
+  saveLocal();
+  if (S.mode === "cloud" && S.col) {
+    try { obj ? await S.col.doc(k).set(obj) : await S.col.doc(k).delete(); }
+    catch(e){
+      if (e && e.code === "quota_exceeded") { toast("No hay espacio para más registros."); return; }
+      if (S.unsub) S.unsub();
+      S.mode = "local"; S.col = null;
+      if (obj) S.entries[k] = obj; else delete S.entries[k];
+      saveLocal(); setStoreStatus(); renderCal();
+    }
+  }
+}
+async function persistPlan(){
+  saveLocal();
+  if (S.mode === "cloud" && S.col) { try { await S.col.doc("plan").set(S.plan); } catch(e){} }
+}
+async function initCloud(){
+  let tries = 0;
+  while (!(window.claude && window.claude.use) && tries < 20) { await new Promise(r => setTimeout(r,150)); tries++; }
+  if (!(window.claude && window.claude.use)) return;
+  try {
+    const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (!db || !user) return;
+    const uid = await user.id();
+    if (!uid) return;
+    const col = db.collection("data/users/" + uid);
+    let first = true;
+    S.unsub = col.onSnapshot(async snap => {
+      const e = {}; let plan = null;
+      snap.docs.forEach(d => { if (d.id === "plan") plan = d.data(); else if (/^\d{4}-\d{2}-\d{2}$/.test(d.id)) e[d.id] = d.data(); });
+      if (first && !snap.metadata.fromCache) {
+        first = false;
+        // si había registros en este navegador y la cuenta está vacía, se suben una vez
+        if (snap.empty && Object.keys(S.entries).length) {
+          try { for (const [k,v] of Object.entries(S.entries)) await col.doc(k).set(v); await col.doc("plan").set(S.plan); }
+          catch(err){ if (S.unsub) S.unsub(); return; }
+          S.col = col; S.mode = "cloud"; setStoreStatus();
+          return;
+        }
+        S.col = col; S.mode = "cloud"; setStoreStatus();
+      }
+      if (S.mode !== "cloud") return;
+      S.entries = e; if (plan) S.plan = { meta: plan.meta ?? 7.5, bed: plan.bed || "23:00" };
+      saveLocal(); renderAll();
+    }, () => { S.mode = "local"; setStoreStatus(); });
+  } catch(e){}
+}
+
+// ---------- toast ----------
+let tt;
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(tt); tt = setTimeout(()=>t.classList.remove("show"), 2600); }
+
+// ---------- navegación ----------
+const VIEWS = ["inicio","antifaz","guia","diario","frase","semana"];
+function show(v){
+  if (!VIEWS.includes(v)) v = "inicio";
+  VIEWS.forEach(x => $("#v-"+x).hidden = x !== v);
+  document.querySelectorAll("nav a").forEach(a => { if (a.dataset.v === v) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  if (v === "semana") renderWeek();
+  if (v === "frase") renderPhrase();
+  window.scrollTo({top:0});
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest('a[href^="#"]');
+  if (!a) return;
+  const v = a.getAttribute("href").slice(1);
+  if (VIEWS.includes(v)) { e.preventDefault(); history.replaceState(null,"","#"+v); show(v); }
+});
+
+// ---------- diario ----------
+let sel = new Date(TODAY), calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+const form = { mood:null, slept:null, songs:0, wakes:0 };
+let dirty = false;
+$("#entry").addEventListener("input", () => dirty = true);
+$("#entry").addEventListener("click", e => { if (e.target.closest(".chip,.stepper button")) dirty = true; });
+
+function status(e){
+  if (!e) return null;
+  const day = !!(e.thoughts || e.lived || e.pending || e.mood);
+  const night = !!e.slept;
+  return day && night ? "full" : (day || night) ? "half" : null;
+}
+function renderCal(){
+  $("#cal-month").textContent = `${MONTHS[calMonth.getMonth()]} ${calMonth.getFullYear()}`;
+  const c = $("#cal"); c.innerHTML = "";
+  DOW_SHORT.forEach(d => { const s = document.createElement("span"); s.className = "dow"; s.textContent = d; c.appendChild(s); });
+  const first = monday(calMonth);
+  const lastDay = new Date(calMonth.getFullYear(), calMonth.getMonth()+1, 0);
+  for (let d = new Date(first); d <= lastDay || (d.getDay()+6)%7 !== 0; d = addDays(d,1)) {
+    const b = document.createElement("button"); b.type = "button";
+    if (d.getMonth() !== calMonth.getMonth()) { b.style.visibility = "hidden"; b.tabIndex = -1; }
+    b.textContent = d.getDate();
+    const k = key(d);
+    if (d > TODAY) b.disabled = true;
+    if (k === key(TODAY)) b.classList.add("today");
+    if (k === key(sel)) b.classList.add("sel");
+    const st = status(S.entries[k]);
+    if (st) { const i = document.createElement("i"); i.className = st; b.appendChild(i); }
+    b.setAttribute("aria-label", fmtLong(d) + (st === "full" ? ", completo" : st === "half" ? ", a medias" : ""));
+    const dd = new Date(d);
+    b.addEventListener("click", () => { sel = dd; renderCal(); fillForm(); });
+    c.appendChild(b);
+  }
+  $("#cal-next").disabled = calMonth.getFullYear() === TODAY.getFullYear() && calMonth.getMonth() === TODAY.getMonth();
+}
+$("#cal-prev").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth()-1, 1); renderCal(); };
+$("#cal-next").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth()+1, 1); renderCal(); };
+
+function buildChips(host, items, field){
+  host.innerHTML = "";
+  items.forEach(([val,label]) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = label; b.dataset.val = val;
+    b.setAttribute("aria-pressed","false");
+    b.onclick = () => { form[field] = form[field] === val ? null : val; syncChips(); };
+    host.appendChild(b);
+  });
+}
+function syncChips(){
+  document.querySelectorAll("#f-mood .chip").forEach(b => b.setAttribute("aria-pressed", String(form.mood === b.dataset.val)));
+  document.querySelectorAll("#f-slept .chip").forEach(b => b.setAttribute("aria-pressed", String(form.slept === b.dataset.val)));
+}
+buildChips($("#f-mood"), MOODS.map(m=>[m,m]), "mood");
+buildChips($("#f-slept"), SLEPT, "slept");
+$("#f-program").innerHTML = PROGRAMS.map(p => `<option value="${p}">${p || "Sin indicar"}</option>`).join("");
+document.querySelectorAll(".stepper").forEach(st => {
+  const f = st.dataset.for, [minus, plus] = st.querySelectorAll("button");
+  minus.onclick = () => { form[f] = Math.max(0, form[f]-1); $("#f-"+f).textContent = form[f]; };
+  plus.onclick = () => { form[f] = Math.min(30, form[f]+1); $("#f-"+f).textContent = form[f]; };
+});
+
+function fillForm(){
+  const k = key(sel), e = S.entries[k] || {};
+  const isToday = k === key(TODAY);
+  $("#d-title").textContent = isToday ? `Hoy, ${fmtLong(sel)}` : fmtLong(sel).replace(/^./, c => c.toUpperCase());
+  $("#night-legend").textContent = `La noche del ${DOWS[sel.getDay()]} ${sel.getDate()}`;
+  $("#f-thoughts").value = e.thoughts || ""; $("#f-lived").value = e.lived || ""; $("#f-pending").value = e.pending || "";
+  $("#f-ritual").checked = !!e.ritual; $("#f-phone").checked = !!e.phone;
+  $("#f-bed").value = e.bed || ""; $("#f-hours").value = e.hours ?? "";
+  $("#f-latency").value = e.latency != null ? String(e.latency) : "";
+  $("#f-program").value = e.program || "";
+  form.mood = e.mood || null; form.slept = e.slept || null; form.songs = e.songs || 0; form.wakes = e.wakes || 0;
+  $("#f-songs").textContent = form.songs; $("#f-wakes").textContent = form.wakes;
+  syncChips();
+  dirty = false;
+  $("#save-status").textContent = S.entries[k] ? "Este día ya tiene registro. Puedes editarlo." : "";
+  renderDelete(false);
+}
+function renderDelete(confirming){
+  const z = $("#del-zone"); z.innerHTML = ""; z.className = "";
+  if (!S.entries[key(sel)]) return;
+  if (!confirming) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "btn small"; b.textContent = "Borrar día";
+    b.onclick = () => renderDelete(true); z.appendChild(b);
+  } else {
+    z.className = "confirm";
+    z.innerHTML = `<span class="muted">¿Borrar este día?</span>`;
+    const y = document.createElement("button"); y.type = "button"; y.className = "btn small"; y.textContent = "Sí, borrar";
+    y.onclick = async () => { await persist(key(sel), null); toast("Día borrado"); renderCal(); fillForm(); };
+    const n = document.createElement("button"); n.type = "button"; n.className = "btn small"; n.textContent = "Cancelar";
+    n.onclick = () => renderDelete(false);
+    z.append(y, n);
+  }
+}
+$("#entry").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const hRaw = $("#f-hours").value.replace(",", ".");
+  const hours = hRaw === "" ? null : Math.min(16, Math.max(0, parseFloat(hRaw)));
+  if (hRaw !== "" && isNaN(hours)) { toast("Escribe las horas como número, por ejemplo 7.5"); return; }
+  const obj = {
+    thoughts: $("#f-thoughts").value.trim(), lived: $("#f-lived").value.trim(), pending: $("#f-pending").value.trim(),
+    mood: form.mood, ritual: $("#f-ritual").checked,
+    slept: form.slept, bed: $("#f-bed").value || null, hours, songs: form.songs, wakes: form.wakes,
+    latency: $("#f-latency").value ? Number($("#f-latency").value) : null,
+    program: $("#f-program").value || null, phone: $("#f-phone").checked,
+    updated: new Date().toISOString()
+  };
+  await persist(key(sel), obj);
+  renderCal(); fillForm();
+  $("#save-status").innerHTML = `Guardado. <a href="#frase">Lee tu frase del día →</a>`;
+  toast("Día guardado");
+});
+
+// ---------- frase ----------
+let phOffset = 0, cueTimer;
+function renderPhrase(){
+  const d = addDays(TODAY, phOffset);
+  $("#f-date-title").textContent = phOffset === 0 ? `Para hoy, ${fmtLong(TODAY)}` : "Otra frase para ti";
+  const p = $("#phrase"); p.classList.add("fade");
+  setTimeout(() => { p.textContent = PHRASES[phraseIdx(d)]; p.classList.remove("fade"); }, 250);
+  $("#ph-today").hidden = phOffset === 0;
+}
+$("#ph-next").onclick = () => { phOffset++; renderPhrase(); };
+$("#ph-prev").onclick = () => { phOffset--; renderPhrase(); };
+$("#ph-today").onclick = () => { phOffset = 0; renderPhrase(); };
+(function cue(){ let inh = true; const c = $("#cue"); cueTimer = setInterval(() => { inh = !inh; c.textContent = inh ? "Inhala" : "Exhala"; }, 5000); })();
+
+// ---------- semana ----------
+let wStart = monday(TODAY);
+function demoEntries(){
+  const m = addDays(monday(TODAY), -7), out = {};
+  const rows = [
+    {slept:"costo",bed:"23:40",hours:6,songs:4,wakes:2,latency:45,phone:true,ritual:false,mood:"Ansioso",program:PROGRAMS[1]},
+    {slept:"si",bed:"23:10",hours:7,songs:2,wakes:1,latency:22,phone:false,ritual:true,mood:"Cansado",program:PROGRAMS[2]},
+    {slept:"costo",bed:"00:30",hours:5.5,songs:6,wakes:2,latency:75,phone:true,ritual:false,mood:"Saturado",program:PROGRAMS[3]},
+    {slept:"si",bed:"23:00",hours:7.5,songs:2,wakes:0,latency:10,phone:false,ritual:true,mood:"Tranquilo",program:PROGRAMS[4]},
+    {slept:"si",bed:"23:15",hours:7,songs:3,wakes:1,latency:22,phone:false,ritual:true,mood:"Contento",program:PROGRAMS[5]},
+    {slept:"no",bed:"01:20",hours:4,songs:7,wakes:3,latency:75,phone:true,ritual:false,mood:"Ansioso",program:PROGRAMS[9]},
+    {slept:"si",bed:"22:50",hours:8,songs:2,wakes:0,latency:10,phone:false,ritual:true,mood:"Tranquilo",program:PROGRAMS[6]}
+  ];
+  rows.forEach((r,i) => out[key(addDays(m,i))] = Object.assign({thoughts:"(ejemplo)"}, r));
+  return { entries: out, start: m };
+}
+function analyze(start, entries){
+  const days = [...Array(7)].map((_,i) => { const d = addDays(start,i); return { d, k:key(d), e: entries[key(d)] || null }; });
+  const nights = days.filter(x => x.e && x.e.slept);
+  const meta = Number(S.plan.meta) || 7.5, target = toMin(S.plan.bed || "23:00");
+  const hrs = nights.filter(x => x.e.hours != null).map(x => x.e.hours);
+  const avg = a => a.length ? a.reduce((s,v)=>s+v,0)/a.length : null;
+  const avgH = avg(hrs), avgSongs = avg(nights.map(x => x.e.songs || 0));
+  const beds = nights.map(x => toMin(x.e.bed)).filter(v => v != null);
+  const bedMean = avg(beds);
+  const bedSd = beds.length > 2 ? Math.sqrt(avg(beds.map(v => (v-bedMean)**2))) : 0;
+  const cnt = f => nights.filter(f).length;
+  const moods = {}; days.forEach(x => { if (x.e && x.e.mood) moods[x.e.mood] = (moods[x.e.mood]||0)+1; });
+  const checks = nights.map(x => {
+    const e = x.e; const bm = toMin(e.bed);
+    return { x, ritual: !!e.ritual, phone: !e.phone, hours: e.hours != null && e.hours >= meta, bed: bm != null && Math.abs(bm - target) <= 30 };
+  });
+  const totalChecks = checks.length * 4, done = checks.reduce((s,c)=>s + c.ritual + c.phone + c.hours + c.bed, 0);
+  const pct = totalChecks ? Math.round(done/totalChecks*100) : 0;
+  const signals = [];
+  const lat = cnt(x => (x.e.latency||0) >= 45), wk = cnt(x => (x.e.wakes||0) >= 2), no = cnt(x => x.e.slept === "no"), ph = cnt(x => x.e.phone);
+  const stress = (moods["Ansioso"]||0) + (moods["Saturado"]||0);
+  if (lat >= 2) signals.push({lvl: lat >= 4 ? "alert":"warn", t:"Te cuesta conciliar el sueño", p:`En ${lat} noches tardaste más de 30 minutos en dormirte. Prueba empezar tu cierre del día 30 minutos antes y usar ruido marrón o la misma pista del programa toda la semana.`});
+  if (wk >= 2) signals.push({lvl: wk >= 4 ? "alert":"warn", t:"Sueño interrumpido", p:`Te despertaste dos o más veces en ${wk} noches. Revisa la temperatura y la luz de la habitación, y si te despiertas, vuelve a la misma pista en lugar de buscar el teléfono.`});
+  if (avgH != null && avgH < meta - 1) signals.push({lvl: avgH < 6 ? "alert":"warn", t:"Dormiste menos de lo que te propusiste", p:`Tu promedio fue ${nf(avgH)} h frente a una meta de ${nf(meta)} h. Adelantar la hora de acostarte 20 minutos es un primer paso realista.`});
+  if (no >= 2) signals.push({lvl:"alert", t:"Noches sin dormir", p:`Marcaste ${no} noches en las que no lograste dormir. Si esto se repite varias semanas, conviene comentarlo con un médico o especialista del sueño.`});
+  if (bedSd > 60) signals.push({lvl:"warn", t:"Horario irregular", p:`Tu hora de acostarte varió más de una hora entre noches. Si trabajas por turnos, fija una rutina de cierre igual para cada tipo de turno.`});
+  if (ph >= 2) signals.push({lvl:"warn", t:"El teléfono sigue en la cama", p:`Usaste el teléfono ya acostado en ${ph} noches. Déjalo cargando fuera de tu alcance antes de ponerte el antifaz.`});
+  if (avgSongs != null && avgSongs >= 5) signals.push({lvl:"warn", t:"Muchas pistas para dormirte", p:`Usaste en promedio ${nf(avgSongs)} pistas por noche. Cambiar de contenido mantiene la atención despierta; elige una sola pista larga y deja que el temporizador la apague.`});
+  if (stress >= 3) signals.push({lvl:"warn", t:"Días de mucha carga", p:`Cerraste ${stress} días con ansiedad o saturación. Dedica más tiempo a la sección de pendientes: anotarlos ayuda a dejarlos fuera de la cama.`});
+  return { days, nights, meta, avgH, avgSongs, hrs, checks, pct, signals, moods, lat, no };
+}
+function chartSVG(a){
+  const W = 640, H = 220, L = 34, R = 10, T = 14, B = 30, max = 10;
+  const bw = (W-L-R)/7, y = v => T + (H-T-B)*(1 - Math.min(v,max)/max);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Horas dormidas por noche">`;
+  [0,2,4,6,8,10].forEach(v => s += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${v}h</text>`);
+  a.days.forEach((x,i) => {
+    const cx = L + bw*i + bw/2;
+    const h = x.e && x.e.hours != null ? x.e.hours : null;
+    if (h != null) {
+      const top = y(h), ok = h >= a.meta;
+      s += `<rect x="${cx-bw*0.28}" y="${top}" width="${bw*0.56}" height="${Math.max(0,y(0)-top)}" rx="5" fill="${ok ? "var(--accent)" : "var(--accent-soft)"}" stroke="var(--accent)" stroke-width="1"/>`;
+      s += `<text x="${cx}" y="${top-6}" text-anchor="middle" font-size="12" fill="var(--fg)" font-weight="600">${nf(h)}</text>`;
+    } else {
+      s += `<text x="${cx}" y="${y(0)-8}" text-anchor="middle" font-size="12" fill="var(--muted)">–</text>`;
+    }
+    s += `<text x="${cx}" y="${H-10}" text-anchor="middle" font-size="12" fill="var(--muted)">${DOW_SHORT[i]} ${x.d.getDate()}</text>`;
+  });
+  s += `<line x1="${L}" x2="${W-R}" y1="${y(a.meta)}" y2="${y(a.meta)}" stroke="var(--fg)" stroke-dasharray="4 4" stroke-width="1.2" opacity=".7"/>`;
+  s += `<text x="${W-R}" y="${y(a.meta)-6}" text-anchor="end" font-size="11" fill="var(--fg)">Meta ${nf(a.meta)} h</text></svg>`;
+  return s;
+}
+function renderWeek(){
+  const isCurrent = key(wStart) === key(monday(TODAY));
+  const end = addDays(wStart,6);
+  $("#w-range").textContent = `${fmtShort(wStart)} – ${fmtShort(end)} ${end.getFullYear()}`;
+  $("#w-next").disabled = isCurrent;
+  $("#w-title").textContent = isCurrent ? "Esta semana" : "Tu semana";
+  const realHas = [...Array(7)].some((_,i) => { const e = S.entries[key(addDays(wStart,i))]; return e && e.slept; });
+  let start = wStart, entries = S.entries, banner = "";
+  if (S.demo) { const d = demoEntries(); start = d.start; entries = d.entries; banner = `<div class="banner"><span>Estás viendo una <b>semana de ejemplo</b> con datos inventados para mostrar el informe.</span><button class="btn small" id="demo-off">Volver a mis datos</button></div>`; }
+  const body = $("#w-body");
+  if (!S.demo && !realHas) {
+    body.innerHTML = `<div class="card empty"><h3>Todavía no hay noches registradas en esta semana</h3><p class="muted" style="max-width:52ch">Cada mañana registra cómo dormiste en el Registro diario. El domingo aquí verás cómo te fue, señales a observar y si cumpliste tu plan.</p><div class="row" style="justify-content:center"><a class="btn primary" href="#diario">Registrar una noche</a><button class="btn" id="demo-on">Ver un informe de ejemplo</button></div></div>`;
+    $("#demo-on").onclick = () => { S.demo = true; renderWeek(); };
+    return;
+  }
+  const a = analyze(start, entries);
+  const weekDone = S.demo || addDays(start,6) < TODAY || key(addDays(start,6)) === key(TODAY);
+  const n = a.nights.length;
+  let verdict;
+  if (a.pct >= 75) verdict = ["Cumpliste tu plan", "Mantuviste la mayoría de tus hábitos de cierre. Sigue con la misma hora de acostarte la próxima semana."];
+  else if (a.pct >= 50) verdict = ["Cumpliste tu plan a medias", "Hubo noches buenas y otras más difíciles. Elige un solo hábito para reforzar la próxima semana."];
+  else verdict = ["Tu plan quedó pendiente esta semana", "No pasa nada. Empieza por el hábito más fácil para ti: dejar el teléfono fuera de la cama o escribir tu cierre del día."];
+  const sorted = a.nights.filter(x => x.e.hours != null).sort((p,q) => q.e.hours - p.e.hours);
+  const best = sorted[0], worst = sorted[sorted.length-1];
+  const topMood = Object.entries(a.moods).sort((p,q)=>q[1]-p[1])[0];
+  let how = `Registraste ${n} de 7 noches.`;
+  if (a.avgH != null) how += ` Dormiste en promedio ${nf(a.avgH)} h, ${a.avgH >= a.meta ? "dentro de" : "por debajo de"} tu meta de ${nf(a.meta)} h.`;
+  if (best && worst && best !== worst) how += ` Tu mejor noche fue el ${DOWS[best.d.getDay()]} (${nf(best.e.hours)} h) y la más difícil el ${DOWS[worst.d.getDay()]} (${nf(worst.e.hours)} h).`;
+  if (topMood) how += ` El estado de ánimo más frecuente al cerrar el día fue «${topMood[0].toLowerCase()}».`;
+  const ritualNights = a.checks.filter(c => c.ritual), noRitual = a.checks.filter(c => !c.ritual);
+  const avgOf = arr => arr.length ? arr.reduce((s,c)=>s+(c.x.e.hours||0),0)/arr.length : null;
+  const rA = avgOf(ritualNights), nA = avgOf(noRitual);
+  if (rA != null && nA != null && rA - nA >= 0.5) how += ` Las noches en que hiciste tu cierre del día dormiste ${nf(rA - nA)} h más.`;
+  const tick = v => v ? `<td class="y">✓</td>` : `<td class="n">–</td>`;
+  const rows = a.checks.map(c => `<tr><td>${DOWS[c.x.d.getDay()].replace(/^./,m=>m.toUpperCase())} ${c.x.d.getDate()}</td>${tick(c.ritual)}${tick(c.phone)}${tick(c.hours)}${tick(c.bed)}<td style="font-variant-numeric:tabular-nums">${c.x.e.hours != null ? nf(c.x.e.hours)+" h" : "–"}</td><td style="font-variant-numeric:tabular-nums">${c.x.e.songs ?? 0}</td></tr>`).join("");
+  const sig = a.signals.length ? a.signals.map(s => `<div class="signal"><span class="pill ${s.lvl}">${s.lvl === "alert" ? "Atención" : "A observar"}</span><div><b>${s.t}</b><p>${s.p}</p></div></div>`).join("")
+    : `<div class="signal"><span class="pill ok">En calma</span><div><b>No aparecen señales destacadas</b><p>Tus registros de esta semana no muestran patrones que debas vigilar. Sigue con tu rutina.</p></div></div>`;
+  const pro = (a.signals.filter(s=>s.lvl==="alert").length >= 2 || a.no >= 3) ? `<p class="note" style="color:var(--fg)">Varias señales aparecieron juntas esta semana. Si se repiten, habla con un médico o especialista del sueño; tu registro te servirá para contarle cómo han sido tus noches.</p>` : "";
+  body.innerHTML = `
+    <div style="display:grid;gap:24px">
+      ${banner}
+      ${!weekDone ? `<div class="banner"><span>Semana en curso. El informe se completa el domingo; esto es lo que llevas hasta hoy.</span></div>` : ""}
+      <div class="verdict"><p class="eyebrow">Tu plan · ${a.pct}% de los hábitos cumplidos</p><h3>${verdict[0]}</h3><p class="muted">${verdict[1]}</p></div>
+      <div class="kpis">
+        <div><small>Noches registradas</small><strong>${n}/7</strong></div>
+        <div><small>Promedio de sueño</small><strong>${a.avgH != null ? nf(a.avgH)+" h" : "–"}</strong></div>
+        <div><small>Pistas por noche</small><strong>${a.avgSongs != null ? nf(a.avgSongs) : "–"}</strong></div>
+        <div><small>Noches con cierre del día</small><strong>${ritualNights.length}</strong></div>
+      </div>
+      <div class="card" style="display:grid;gap:12px"><h3>Cómo te fue</h3><p class="muted" style="max-width:70ch">${how}</p><div class="chart-wrap">${chartSVG(a)}</div></div>
+      <div style="display:grid;gap:12px"><h3>Posibles señales a observar</h3><div class="signals">${sig}</div>${pro}</div>
+      <div style="display:grid;gap:12px"><h3>Cumplimiento del plan, noche a noche</h3>
+        <div class="table-wrap"><table><thead><tr><th>Noche</th><th>Cierre del día</th><th>Sin teléfono</th><th>Meta de horas</th><th>Hora de acostarte</th><th>Horas</th><th>Pistas</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <p class="note">Meta: ${nf(a.meta)} h por noche y acostarte a las ${S.plan.bed} con 30 minutos de margen.</p>
+      </div>
+    </div>`;
+  const off = $("#demo-off"); if (off) off.onclick = () => { S.demo = false; renderWeek(); };
+}
+$("#w-prev").onclick = () => { S.demo = false; wStart = addDays(wStart,-7); renderWeek(); };
+$("#w-next").onclick = () => { S.demo = false; wStart = addDays(wStart,7); renderWeek(); };
+function fillPlan(){ $("#p-meta").value = S.plan.meta; $("#p-bed").value = S.plan.bed; }
+$("#p-save").onclick = async () => {
+  const m = parseFloat(String($("#p-meta").value).replace(",","."));
+  if (isNaN(m) || m < 4 || m > 12) { toast("La meta debe estar entre 4 y 12 horas"); return; }
+  S.plan = { meta: m, bed: $("#p-bed").value || "23:00" };
+  await persistPlan(); renderWeek(); toast("Plan guardado");
+};
+
+function renderAll(){ renderCal(); if (!dirty) fillForm(); fillPlan(); if (!$("#v-semana").hidden) renderWeek(); }
+
+// ---------- arranque ----------
+loadLocal(); setStoreStatus();
+renderCal(); fillForm(); fillPlan(); renderPhrase();
+show((location.hash || "#inicio").slice(1));
+initCloud();
+})();
+</script>
+
+</body>
+</html>
